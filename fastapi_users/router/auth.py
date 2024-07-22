@@ -1,6 +1,6 @@
 from typing import Tuple
 
-from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from fastapi_users import models
@@ -27,6 +27,7 @@ def get_auth_router(
     get_current_user_token = authenticator.current_user_token(
         active=True, verified=requires_verification
     )
+    has_refresh_capabilty = isinstance(backend, AuthenticationBackendRefresh)
 
     login_responses: OpenAPIResponseType = {
         status.HTTP_400_BAD_REQUEST: {
@@ -95,7 +96,7 @@ def get_auth_router(
         user, token = user_token
         return await backend.logout(strategy, user, token)
 
-    if isinstance(backend, AuthenticationBackendRefresh):
+    if has_refresh_capabilty:
         refresh_responses: OpenAPIResponseType = {
             status.HTTP_401_UNAUTHORIZED: {
                 "description": "Wrong token",
@@ -118,7 +119,7 @@ def get_auth_router(
             "/refresh", name=f"auth:{backend.name}.refresh", responses=refresh_responses
         )
         async def refresh(
-            refresh_token: str = Body(..., embed=True),
+            refresh_token: str = Form(..., embed=True),
             strategy: StrategyRefresh[models.UP, models.ID] = Depends(
                 backend.get_strategy
             ),
