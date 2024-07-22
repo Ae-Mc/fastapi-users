@@ -119,7 +119,7 @@ def get_auth_router(
             "/refresh", name=f"auth:{backend.name}.refresh", responses=refresh_responses
         )
         async def refresh(
-            refresh_token: str = Form(..., embed=True),
+            refresh_token: str = Form(...),
             strategy: StrategyRefresh[models.UP, models.ID] = Depends(
                 backend.get_strategy
             ),
